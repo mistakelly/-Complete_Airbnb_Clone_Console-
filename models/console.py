@@ -324,6 +324,7 @@ if __name__ == '__main__':
             print('** attribute value missing**')
             return
 
+
         # print(all_obj)
         key = f"{usr_input[1]}.{usr_input[0]}"
 
