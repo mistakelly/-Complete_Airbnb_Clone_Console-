@@ -82,5 +82,17 @@ class TestBaseModel(unittest.TestCase):
             self.assertIn(key, content, "save_obj did not save the object data to filestorage")
 
     def test_todict_method(self):
-       pass
+        model_json = self.model.to_dict()
 
+        self.assertIsInstance(model_json, dict, 'Object not a dict instance')
+
+        self.assertIn('__class__', model_json, "__class__ not present in dictionary")
+        self.assertIsInstance(model_json['created_at'], str,  'Attribute created_at is not an instance of datetime')
+        self.assertIsInstance(model_json['updated_at'], str,  'Attribute updated_at is not an instance of datetime')
+
+        self.assertIsInstance(self.model.created_at, datetime,
+                              f'Attribute created_at is not a datetime instance'
+                              f' after the execution of to_dict method')
+        self.assertIsInstance(self.model.updated_at, datetime,
+                              f'Attribute updated_at is not a datetime instance'
+                              f' after the execution of to_dict method')
