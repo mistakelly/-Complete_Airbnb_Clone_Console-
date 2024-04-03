@@ -19,20 +19,20 @@ class TestBaseModel(unittest.TestCase):
 
     #######################Custom Methods#####################
 
-    def assert_hasattri(self, model, attribute):
+    def assert_hasattri(self, model, attribute) -> None:
         """
             custom assert_hasattri Method.
             checks for object presence and assert True or False.
         """
         self.assertTrue(hasattr(model, attribute), f'{model} Attribute {attribute} does not exist')
 
-    def assert_attribute_match(self, model, model_attribute):
+    def assert_attribute_match(self, model, model_attribute) -> None:
         """
             custom match object attribute after reloading to ensure attribute uniqueness.
         """
         self.assertEqual(model, model_attribute, f"{model_attribute} don't match ")
 
-    def assert_attribute_instance_types(self, model, attribute_dict: dict):
+    def assert_attribute_instance_types(self, model, attribute_dict: dict) -> None:
         """
             custom assertIsinstance
             parameter1: object_type
@@ -45,7 +45,7 @@ class TestBaseModel(unittest.TestCase):
         #######################Custom Methods######################
 
         #######################test_methods Methods#################
-    def test_module_and_BaseModel_doc_string(self):
+    def test_module_and_BaseModel_doc_string(self) -> None:
         """
             Responsible for checking for baseModel and base_model file docstring.
         """
@@ -53,7 +53,7 @@ class TestBaseModel(unittest.TestCase):
         self.assertIsNotNone(models.base_model.__doc__, f'Module {models.base_model} has no docstring')
         self.assertIsNotNone(BaseModel.__doc__, 'BaseModel class has no docstring')
 
-    def test_all_BaseModel_methods_doc_string(self):
+    def test_all_BaseModel_methods_doc_string(self) -> None:
         """
             Responsible for checking all BaseModel Method docstring.
         """
@@ -61,7 +61,7 @@ class TestBaseModel(unittest.TestCase):
         for name, method in BaseModel_method:
             self.assertIsNotNone(method.__doc__, f"Method <{name}> of BaseModel has no docstring")
 
-    def test_init_method(self):
+    def test_init_method(self) -> None:
         """
             Responsible for testing __init__ method
         """
@@ -75,7 +75,7 @@ class TestBaseModel(unittest.TestCase):
         self.assert_attribute_instance_types(self.model.__dict__,
                                              {'id': str, 'created_at': datetime, 'updated_at': datetime})
 
-    def test_custom_init_method(self):
+    def test_custom_init_method(self) -> None:
         """
             Responsible for testing the __init__ method when objects are reloaded.
         """
@@ -98,7 +98,7 @@ class TestBaseModel(unittest.TestCase):
         self.assert_attribute_match(self.model.created_at, model_dict.created_at)
         self.assert_attribute_match(self.model.updated_at, model_dict.updated_at)
 
-    def test_str_method(self):
+    def test_str_method(self)-> None:
         """
             Responsible for testing BaseModel __str__ Method.
         """
@@ -113,7 +113,7 @@ class TestBaseModel(unittest.TestCase):
         # string match
         self.assertEqual(self.model.__str__(), expected_str, "strings don't match")
 
-    def test_save_method(self):
+    def test_save_method(self) -> None:
         """
             Responsible for testing BaseModel save Method.
         """
@@ -133,7 +133,7 @@ class TestBaseModel(unittest.TestCase):
         self.mock_new.assert_called_once_with(self.model)  # new method of filestorage called once
         self.mock_save_obj.assert_called_once()  # save_obj of filestorage called once
 
-    def test_to_dict_method(self):
+    def test_to_dict_method(self) -> None:
         """
             Responsible for testing BaseModel to_dict Method.
         """
