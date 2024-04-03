@@ -8,8 +8,10 @@ import json
 
 class TestFileStorage(unittest.TestCase):
     def setUp(self) -> None:
-        self.filestorage = FileStorage()
         self.model = models.base_model.BaseModel()
+        self.key = "{}.{}".format(
+            self.model.__class__.__name__, self.model.id
+        )
 
     def test_FileStorage_docstring(self):
         self.assertIsNotNone(models.engine.file_storage.__doc__, 'Module has no docstring')
@@ -17,17 +19,23 @@ class TestFileStorage(unittest.TestCase):
 
     def test_new_and_all(self):
         models.storage.new(self.model)
-        key = "{}.{}".format(
-            self.model.__class__.__name__, self.model.id
-        )
+
         all_obj = models.storage.all()
 
-        self.assertIn(key, all_obj.keys())
+        self.assertIsInstance(all_obj, dict, 'Datastructure not an dict instance')
+        self.assertIn(self.key, all_obj)
 
+    def test_save(self):
+        models.storage.new(self.model)
 
+        models.storage.save_obj()
+        with open('file.json', 'r') as file:
+            content = json.load(file)
+            for k, v in content.items():
+                self.assertIn('__class__', v, '__class__ not found')
+            self.assertIn(self.key, content, 'save_obj did not save the object')
 
-
-        # print(key)
-#
-# if __name__ == '__main__':
-#     unittest.TestCase()
+    def test_reload_obj(self):
+        pass
+ git add tests/test_basemodel_and_filestorage/test_filestorage.py
+  597  git commit -m "unittest for new_and_all method"
