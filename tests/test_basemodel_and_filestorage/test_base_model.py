@@ -1,98 +1,153 @@
-import json
-
-import models.base_model
+import models
 from models.base_model import BaseModel
 import unittest
 import inspect
 from datetime import datetime
-
-
-class Test_test_base_model(unittest.TestCase):
-    pass
+from unittest.mock import MagicMock
 
 
 class TestBaseModel(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model = BaseModel()
+        # mocking to isolate save method of BaseModel with new and save_obj of filestorage
+        self.mock_save_obj = MagicMock()
+        models.storage.save_obj = self.mock_save_obj
 
+        self.mock_new = MagicMock()
+        models.storage.new = self.mock_new
+
+    #######################Custom Methods#####################
+
+    def assert_hasattri(self, model, attribute):
+        """
+            custom assert_hasattri Method.
+            checks for object presence and assert True or False.
+        """
+        self.assertTrue(hasattr(model, attribute), f'{model} Attribute {attribute} does not exist')
+
+    def assert_attribute_match(self, model, model_attribute):
+        """
+            custom match object attribute after reloading to ensure attribute uniqueness.
+        """
+        self.assertEqual(model, model_attribute, f"{model_attribute} don't match ")
+
+    def assert_attribute_instance_types(self, model, attribute_dict: dict):
+        """
+            custom assertIsinstance
+            parameter1: object_type
+            parameter2: dict
+        """
+        for attribute_name, attribute_type in attribute_dict.items():
+            self.assertIsInstance(model[attribute_name], attribute_type,
+                                  f"Attribute {attribute_name} not {attribute_type} instance")
+
+        #######################Custom Methods######################
+
+        #######################test_methods Methods#################
     def test_module_and_BaseModel_doc_string(self):
+        """
+            Responsible for checking for baseModel and base_model file docstring.
+        """
+        # baseModel file  and BaseModel class docstring
         self.assertIsNotNone(models.base_model.__doc__, f'Module {models.base_model} has no docstring')
         self.assertIsNotNone(BaseModel.__doc__, 'BaseModel class has no docstring')
 
-    def test_methods_doc_string(self):
-        BaseModel_method = inspect.getmembers(self.model, inspect.isfunction)
+    def test_all_BaseModel_methods_doc_string(self):
+        """
+            Responsible for checking all BaseModel Method docstring.
+        """
+        BaseModel_method = inspect.getmembers(self.model, inspect.ismethod)
         for name, method in BaseModel_method:
-            self.assertIsNotNone(method.__doc__, f"Method {name} of BaseModel has no docstring")
+            self.assertIsNotNone(method.__doc__, f"Method <{name}> of BaseModel has no docstring")
 
     def test_init_method(self):
+        """
+            Responsible for testing __init__ method
+        """
 
-        self.assertTrue(hasattr(self.model, 'id'), 'Attribute id does not exist')
-        self.assertTrue(hasattr(self.model, 'created_at'), 'Attribute created_at does not exist')
-        self.assertTrue(hasattr(self.model, 'updated_at'), 'Attribute updated_at does not exist')
+        # check if model has attributes
+        # self.assertTrue(hasattr(self.model, 'id'), 'Attribute id does not exist')
+        self.assert_hasattri(self.model, 'id')
+        self.assert_hasattri(self.model, 'created_at')
+        self.assert_hasattri(self.model, 'updated_at')
+        # check attribute instances
+        self.assert_attribute_instance_types(self.model.__dict__,
+                                             {'id': str, 'created_at': datetime, 'updated_at': datetime})
 
-        self.assertIsInstance(self.model.id, str, 'Attribute id is Not string instance')
-        self.assertIsInstance(self.model.created_at, datetime, f'Attribute created_at is not a datetime instance')
-        self.assertIsInstance(self.model.updated_at, datetime, f'Attribute updated_at is not a datetime instance')
-        self.assertIsInstance(self.model, BaseModel, f"Object is Not an instance of {BaseModel}")
-
-    def test_custom_init(self):
+    def test_custom_init_method(self):
+        """
+            Responsible for testing the __init__ method when objects are reloaded.
+        """
         model_json = self.model.to_dict()
-        model_dict = BaseModel(**model_json)
+        model_dict = BaseModel(**model_json)  # custom reload_object
 
+        # check reloaded object is BaseModel instance
         self.assertIsInstance(model_dict, BaseModel, "Deserialized object is not an instance of BaseModel")
-        self.assertIsInstance(model_json, dict, f"Serialized model is not a dictionary")
+        self.assertIsInstance(model_json, dict,
+                              f"Serialized model is not a dictionary")  # reloaded object dict instance
 
-        self.assertIsInstance(model_dict.created_at, datetime, f'created_at is not an instance of datetime')
-        self.assertIsInstance(model_dict.updated_at, datetime, f'updated_at is not an instance of datetime')
+        # created_at and updated_at are datetime instance
+        # (Method: self.assert_attribute_instance_types)
+        self.assert_attribute_instance_types(self.model.__dict__,
+                                             {'created_at': datetime, 'updated_at': datetime})
 
-        self.assertEqual(self.model.id, model_dict.id, "Ids dont match")
-        self.assertEqual(self.model.created_at, model_dict.created_at, 'created_at attribute don\'t match')
-        self.assertEqual(self.model.updated_at, model_dict.updated_at, 'updated_at attribute don\'t match')
+        # reloaded_object attribute match with the original object attribute.
+        # (Method: self.assert_attribute_match)
+        self.assert_attribute_match(self.model.id, model_dict.id)
+        self.assert_attribute_match(self.model.created_at, model_dict.created_at)
+        self.assert_attribute_match(self.model.updated_at, model_dict.updated_at)
 
     def test_str_method(self):
+        """
+            Responsible for testing BaseModel __str__ Method.
+        """
 
+        # expected string format
         expected_str = "[{}] ({}) {}".format(
             self.model.__class__.__name__,
             self.model.id,
             self.model.__dict__
         )
 
+        # string match
         self.assertEqual(self.model.__str__(), expected_str, "strings don't match")
 
     def test_save_method(self):
-        model = BaseModel()
-        all_obj = models.storage.all()
+        """
+            Responsible for testing BaseModel save Method.
+        """
+        model_updated_at = self.model.updated_at
 
-        model_updated_at = model.updated_at
-        # simulate change.
-        model.save()
-        updated_model_time = model.updated_at
+        # call the BaseModel save method.
+        self.model.save()
+
+        # update object updated_at
+        updated_model_time = self.model.updated_at
+
+        # check if the save method updated the BaseModel updated_at time.
         self.assertNotEqual(model_updated_at, updated_model_time,
                             "Attribute updated_at did not update the created_at time")
 
-        # construct key
-        key = f"{model.__class__.__name__}.{model.id}"
-        self.assertIn(key, all_obj, "No entry for the newly created object")
-        # call all_obj in the filestorage and check if the key object key is present.
+        # mocking to isolate save method with new and save_obj of filestorage
+        self.mock_new.assert_called_once_with(self.model)  # new method of filestorage called once
+        self.mock_save_obj.assert_called_once()  # save_obj of filestorage called once
 
-        # check if the object attribute was saved in the file_storage (file.json).
-        with open("file.json", 'r') as file:
-            content = json.load(file)
-            self.assertIn(key, content, "save_obj did not save the object data to filestorage")
-
-    def test_todict_method(self):
+    def test_to_dict_method(self):
+        """
+            Responsible for testing BaseModel to_dict Method.
+        """
+        # Arrange: Convert object to dictionary format
         model_json = self.model.to_dict()
 
+        # Assert: Check if the conversion is correct
         self.assertIsInstance(model_json, dict, 'Object not a dict instance')
-
         self.assertIn('__class__', model_json, "__class__ not present in dictionary")
-        self.assertIsInstance(model_json['created_at'], str,  'Attribute created_at is not an instance of datetime')
-        self.assertIsInstance(model_json['updated_at'], str,  'Attribute updated_at is not an instance of datetime')
+        # (Method: self.assert_attribute_instance_types)
+        self.assert_attribute_instance_types(model_json, {'created_at': str, 'updated_at': str})
+        # (Method: self.assert_attribute_instance_types)
+        self.assert_attribute_instance_types(self.model.__dict__, {'created_at': datetime, 'updated_at': datetime})
 
-        self.assertIsInstance(self.model.created_at, datetime,
-                              f'Attribute created_at is not a datetime instance'
-                              f' after the execution of to_dict method')
-        self.assertIsInstance(self.model.updated_at, datetime,
-                              f'Attribute updated_at is not a datetime instance'
-                              f' after the execution of to_dict method')
+
+if __name__ == '__main__':
+    unittest.TestCase()
