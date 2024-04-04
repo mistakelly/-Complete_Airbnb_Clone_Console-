@@ -1,28 +1,48 @@
-from os import path
-print("just before importing BaseModel in the Filestorage")
-from models.base_model import BaseModel
-print("after importing basemodel, now to User")
-from models.user import User
-print("after importing user")
+"""
+    responsible for persisting object state in file_db.
+"""
+
 import json
+from os import path
+from models.base_model import BaseModel
+from models.user import User
+from models.State import state
+from models.City import city
+from models.Place import place
+from models.Amenity import amenity
+from models.Review import review
+
+__all__ = ['FileStorage']
 
 
 class FileStorage:
+    """
+        FileStorage.
+    """
     ALL_CLASSES = {
         'BaseModel': BaseModel,
-        'User': User
+        'User': User,
+        'state': state,
+        'city': city,
+        'place': place,
+        'amenity': amenity,
+        'review': review
     }
     __objects = {}
     __filepath = 'file.json'
 
     def new(self, obj) -> None:
-        print("inside new")
+        print('inside new obj')
+
         """
             this adding New Object to file storage.
         """
         # construct key
-        key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        key = "{}.{}".format(
+            obj.__class__.__name__, obj.id
+        )
         self.__objects[key] = obj
+        print('after new obj')
 
     def all(self) -> dict:
         """
@@ -32,12 +52,12 @@ class FileStorage:
         return self.__objects
 
     def save_obj(self) -> None:
+        print('inside save method')
         """
             for converting the python objects into python dictionary,
             so they can be stored into the file storage,this process is called
             serialization.
         """
-
         # declare dictionary.
         serialized_obj = {}
 
@@ -46,10 +66,12 @@ class FileStorage:
             # to represent every object to dict.
             serialized_obj[k] = v.to_dict()
 
+        # print(serialized_obj)
         # dump into file storage
         with open(self.__filepath, "w") as obj_dic:
             json.dump(serialized_obj, obj_dic, indent=2)
-        print("before leaving save_obj")
+
+            print("outside the save_obj")
 
     def reload(self) -> None:
         """
@@ -74,11 +96,10 @@ class FileStorage:
 
                     # same as doing.
                     global_class = self.ALL_CLASSES[cls_name]
-                    print(global_class)
 
                     result = global_class(**v)
+                    # print(result)
 
                     self.__objects[k] = result
 
 
-print("last last in the filestorage")
